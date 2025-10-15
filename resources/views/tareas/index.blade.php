@@ -75,7 +75,8 @@
                 <p class="text-sm text-gray-400 mb-4">
                     📍 <strong>GPS:</strong> {{ $tarea->coordenadas_gps }}
                 </p>
-                <div class="flex justify-between text-sm text-gray-400">
+
+<div class="flex justify-between text-sm text-gray-400">
     <span>👤 {{ $tarea->user->name ?? 'Usuario' }}</span>
     <span>🕒 {{ $tarea->created_at->diffForHumans() }}</span>
 </div>
@@ -89,11 +90,6 @@
     </a>
 </div>
 
-                <div class="flex justify-between text-sm text-gray-400">
-                    <span>👤 {{ $tarea->user->name ?? 'Usuario' }}</span>
-                    <span>🕒 {{ $tarea->created_at->diffForHumans() }}</span>
-                </div>
-            </div>
             
         @empty
             <div class="col-span-full text-center text-gray-400 py-10">

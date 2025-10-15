@@ -17,7 +17,7 @@ class Tarea extends Model
         'titulo',
         'descripcion',
         'coordenadas_gps',
-        'tipo_reporte',
+        'tipo',
         'user_id',
     ];
      public function user()

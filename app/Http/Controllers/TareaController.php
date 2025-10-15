@@ -20,7 +20,7 @@ class TareaController extends Controller
     }
 
     if ($request->filled('tipo')) {
-        $query->where('tipo', $request->tipo_reporte);
+        $query->where('tipo', $request->tipo);
     }
 
     $tareas = $query->paginate(10);
@@ -82,7 +82,7 @@ public function store(Request $request)
     'titulo' => 'required|string|max:255',
     'descripcion' => 'required|string',
     'coordenadas_gps' => 'required|string|max:255',
-    'tipo_reporte' => 'required|in:vehiculos,generadores,instalaciones',
+    'tipo' => 'required|in:vehiculos,generadores,instalaciones',
 ]);
 
 
