@@ -19,4 +19,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('tareas', TareaController::class);
 });
 
+Route::patch('/tareas/{tarea}/status', [TareaController::class, 'updateStatus'])
+    ->middleware(['auth'])
+    ->name('tareas.updateStatus');
+
+Route::resource('tareas', TareaController::class)->middleware(['auth', 'verified']);
 require __DIR__.'/auth.php';

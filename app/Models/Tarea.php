@@ -13,13 +13,15 @@ class Tarea extends Model
      * The attributes that are mass assignable.
      *
      */
-    protected $fillable = [
-        'titulo',
-        'descripcion',
-        'coordenadas_gps',
-        'tipo',
-        'user_id',
-    ];
+   protected $fillable = [
+    'folio', // Cambiado de 'titulo'
+    'descripcion',
+    'actividades', // Nuevo
+    'observaciones', // Nuevo
+    'tipo',
+    'estado',
+    'user_id',
+];
      public function user()
     {
         return $this->belongsTo(User::class);

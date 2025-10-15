@@ -14,7 +14,7 @@ class TareaController extends Controller
 
     if ($request->filled('busqueda')) {
         $query->where(function ($q) use ($request) {
-            $q->where('titulo', 'like', '%' . $request->busqueda . '%')
+            $query->where('folio', 'like', '%' . $request->busqueda . '%')
               ->orWhere('descripcion', 'like', '%' . $request->busqueda . '%');
         });
     }
@@ -79,10 +79,11 @@ public function store(Request $request)
 {
     // 1. Validación
     $validatedData = $request->validate([
-    'titulo' => 'required|string|max:255',
+    'folio' => 'required|string|max:255', // Cambiado de 'titulo'
     'descripcion' => 'required|string',
-    'coordenadas_gps' => 'required|string|max:255',
-    'tipo' => 'required|in:vehiculos,generadores,instalaciones',
+    'actividades' => 'required|string', // Nuevo
+    'observaciones' => 'nullable|string', // Nuevo (opcional)
+    'tipo' => 'required|in:vehiculos,generadores,instalaciones_red',
 ]);
 
 
@@ -100,6 +101,17 @@ public function store(Request $request)
     {
         //
     }
+public function updateStatus(Tarea $tarea)
+{
+    $nextStatus = match($tarea->estado) {
+        'pendiente' => 'en_proceso',
+        'en_proceso' => 'completada',
+        'completada' => 'pendiente',
+    };
 
+    $tarea->update(['estado' => $nextStatus]);
+
+    return back()->with('success', 'Estado del reporte actualizado.');
+}
     
 }
