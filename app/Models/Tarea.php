@@ -2,33 +2,38 @@
 
 namespace App\Models;
 
+use App\Models\GeneradorDetalle;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\VehiculoDetalle;
 
 class Tarea extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     */
-   protected $fillable = [
-    'folio', // Cambiado de 'titulo'
-    'descripcion',
-    'actividades', // Nuevo
-    'observaciones', // Nuevo
-    'tipo',
-    'estado',
-    'user_id',
-];
-     public function user()
+    protected $fillable = [
+        'folio',
+        'descripcion',
+        'actividades',
+        'observaciones',
+        'tipo',
+        'estado',
+        'user_id', // <-- ¡AÑADE ESTA LÍNEA!
+    ];
+
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
+
     public function generadorDetalle(): HasOne
+    {
+        return $this->hasOne(GeneradorDetalle::class);
+    }
+    public function vehiculoDetalle(): HasOne
 {
-    return $this->hasOne(GeneradorDetalle::class);
+    return $this->hasOne(VehiculoDetalle::class);
 }
 }

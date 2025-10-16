@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Tarea;
 use App\Http\Controllers\Controller;
 use App\Models\GeneradorDetalle;
+use App\Models\VehiculoDetalle;
 
 class TareaController extends Controller
 {
@@ -52,24 +53,33 @@ public function store(Request $request)
     ]);
 
     // 2. Creamos la tarea principal
-    $tarea = auth()->user()->tareas()->create($validatedData);
+    $dataToSave = array_merge($validatedData, ['user_id' => auth()->id()]);
+    $tarea = Tarea::create($dataToSave);
 
-    // 3. Si el reporte es de tipo "generadores", guardamos los detalles específicos
+    // 3. Si el reporte es de tipo "generadores", guardamos sus detalles
     if ($tarea->tipo === 'generadores') {
-        // Validamos los campos de generadores
         $generadorData = $request->validate([
             'cantidad_equipos' => 'required|integer|min:1|max:20',
             'numeros_economicos' => 'required|array|min:1',
-            'numeros_economicos.*' => 'required|string|max:255', // Valida cada número de serie
+            'numeros_economicos.*' => 'required|string|max:255',
         ]);
-
-        // Creamos el registro de detalles y lo asociamos a la tarea
-        $tarea->generadorDetalle()->create([
-            'numeros_economicos' => $generadorData['numeros_economicos'],
+        $tarea->generadorDetalle()->create(['numeros_economicos' => $generadorData['numeros_economicos']]);
+    }
+    // 4. (NUEVO) Si el reporte es de tipo "vehiculos", guardamos sus detalles
+    elseif ($tarea->tipo === 'vehiculos') {
+        $vehiculoData = $request->validate([
+            'gps_marca' => 'nullable|string|max:255',
+            'gps_modelo' => 'nullable|string|max:255',
+            'gps_imei' => 'nullable|string|max:255',
+            'vehiculo_marca' => 'nullable|string|max:255',
+            'vehiculo_modelo' => 'nullable|string|max:255',
+            'vehiculo_matricula' => 'nullable|string|max:255',
+            'vehiculo_numero_economico' => 'nullable|string|max:255',
         ]);
+        $tarea->vehiculoDetalle()->create($vehiculoData);
     }
 
-    // 4. Redirigimos al usuario
+    // 5. Redirigimos
     return redirect()->route('tareas.index')->with('success', '¡Reporte creado exitosamente!');
 }
 
