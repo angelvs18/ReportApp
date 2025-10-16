@@ -13,10 +13,7 @@
             </div>
             <span class="text-2xl opacity-80">{{ 
                 match($tarea->tipo) {
-                    'vehiculos' => '🚗',
-                    'generadores' => '⚙️',
-                    'instalaciones_red' => '🌐',
-                    default => '📋'
+                    'vehiculos' => '🚗', 'generadores' => '⚙️', 'instalaciones_red' => '🌐', default => '📋'
                 } 
             }}</span>
         </div>
@@ -41,6 +38,18 @@
         </div>
         @endif
 
+        {{-- =================== SECCIÓN PARA DETALLES DE GENERADORES =================== --}}
+        @if ($tarea->tipo === 'generadores' && $tarea->generadorDetalle)
+            <div class="pt-4 border-t border-yellow-500">
+                <h3 class="font-semibold text-yellow-300">Números Económicos de Generadores</h3>
+                <ul class="list-disc list-inside mt-2 space-y-1 text-gray-300">
+                    @foreach ($tarea->generadorDetalle->numeros_economicos as $numero)
+                        <li>{{ $numero }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         {{-- SECCIÓN: Estado y Fecha --}}
         <div class="pt-4 border-t border-gray-700 grid grid-cols-2 gap-4">
             <div>
@@ -53,14 +62,10 @@
             </div>
         </div>
 
-        {{-- Botones de Acción --}}
+        {{-- BOTONES --}}
         <div class="flex justify-end space-x-4 pt-6">
-            <a href="{{ route('tareas.index') }}" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-                ⬅️ Volver
-            </a>
-            <a href="{{ route('tareas.edit', $tarea) }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">
-                ✏️ Editar
-            </a>
+            <a href="{{ route('tareas.index') }}" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">Volver</a>
+            <a href="{{ route('tareas.edit', $tarea) }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">Editar</a>
         </div>
     </div>
 </div>

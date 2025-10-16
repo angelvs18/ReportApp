@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request; 
 use App\Models\Tarea;
 use App\Http\Controllers\Controller;
+use App\Models\GeneradorDetalle;
 
 class TareaController extends Controller
 {
@@ -41,19 +42,35 @@ class TareaController extends Controller
      */
 public function store(Request $request)
 {
-    // 1. Valida que los campos no vengan vacíos
+    // 1. Validación de los campos generales
     $validatedData = $request->validate([
-        'titulo' => 'required|string|max:255',
+        'folio' => 'required|string|max:255',
         'descripcion' => 'required|string',
-        'coordenadas_gps' => 'required|string|max:255',
-        'tipo' => 'required|in:vehiculos,generadores,instalaciones_red'
+        'actividades' => 'required|string',
+        'observaciones' => 'nullable|string',
+        'tipo' => 'required|in:vehiculos,generadores,instalaciones_red',
     ]);
 
-    // 2. Crea el reporte y lo asocia automáticamente con el usuario que inició sesión
-    $request->user()->tareas()->create($validatedData);
+    // 2. Creamos la tarea principal
+    $tarea = auth()->user()->tareas()->create($validatedData);
 
-    // 3. Redirige de vuelta a la lista de tareas con un mensaje de éxito
-    return redirect()->route('tareas.index')->with('success', '¡Reporte de tarea creado exitosamente!');
+    // 3. Si el reporte es de tipo "generadores", guardamos los detalles específicos
+    if ($tarea->tipo === 'generadores') {
+        // Validamos los campos de generadores
+        $generadorData = $request->validate([
+            'cantidad_equipos' => 'required|integer|min:1|max:20',
+            'numeros_economicos' => 'required|array|min:1',
+            'numeros_economicos.*' => 'required|string|max:255', // Valida cada número de serie
+        ]);
+
+        // Creamos el registro de detalles y lo asociamos a la tarea
+        $tarea->generadorDetalle()->create([
+            'numeros_economicos' => $generadorData['numeros_economicos'],
+        ]);
+    }
+
+    // 4. Redirigimos al usuario
+    return redirect()->route('tareas.index')->with('success', '¡Reporte creado exitosamente!');
 }
 
     /**
@@ -77,23 +94,41 @@ public function store(Request $request)
      */
     public function update(Request $request, Tarea $tarea)
 {
-    // 1. Validación
+    // 1. Validación de los campos generales
     $validatedData = $request->validate([
-    'folio' => 'required|string|max:255', // Cambiado de 'titulo'
-    'descripcion' => 'required|string',
-    'actividades' => 'required|string', // Nuevo
-    'observaciones' => 'nullable|string', // Nuevo (opcional)
-    'tipo' => 'required|in:vehiculos,generadores,instalaciones_red',
-]);
+        'folio' => 'required|string|max:255',
+        'descripcion' => 'required|string',
+        'actividades' => 'required|string',
+        'observaciones' => 'nullable|string',
+        'tipo' => 'required|in:vehiculos,generadores,instalaciones_red',
+    ]);
 
-
-    // 2. Actualización
+    // 2. Actualizamos la tarea principal
     $tarea->update($validatedData);
 
-    // 3. Redirección
+    // 3. Si el reporte es de tipo "generadores", actualizamos o creamos los detalles
+    if ($tarea->tipo === 'generadores') {
+        // Validamos los campos de generadores
+        $generadorData = $request->validate([
+            'cantidad_equipos' => 'required|integer|min:1|max:20',
+            'numeros_economicos' => 'required|array|min:1',
+            'numeros_economicos.*' => 'required|string|max:255',
+        ]);
+
+        // Usamos updateOrCreate para actualizar el detalle si existe, o crearlo si no.
+        $tarea->generadorDetalle()->updateOrCreate(
+            ['tarea_id' => $tarea->id], // Condición de búsqueda
+            ['numeros_economicos' => $generadorData['numeros_economicos']] // Datos a actualizar o crear
+        );
+    } 
+    // 4. Si el reporte YA NO es de generadores, pero tenía detalles, los borramos para limpiar la base de datos.
+    elseif ($tarea->generadorDetalle) {
+        $tarea->generadorDetalle->delete();
+    }
+
+    // 5. Redirigimos al usuario
     return redirect()->route('tareas.index')->with('success', '¡Reporte actualizado exitosamente!');
 }
-
     /**
      * Remove the specified resource from storage.
      */

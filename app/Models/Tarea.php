@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Tarea extends Model
 {
@@ -26,4 +27,8 @@ class Tarea extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function generadorDetalle(): HasOne
+{
+    return $this->hasOne(GeneradorDetalle::class);
+}
 }
