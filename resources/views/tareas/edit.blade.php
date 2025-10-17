@@ -75,6 +75,21 @@
                 </div>
             </div>
         </div>
+        {{-- CAMPO: Firma Instalador --}}
+        <x-signature-pad 
+            name="instalador" 
+            label="Instalador" 
+            :nombre="old('instalador_nombre', $tarea->instalador_nombre)"
+            :path="old('instalador_firma_path', $tarea->instalador_firma_path)"
+        />
+
+        {{-- CAMPO: Firma Cliente --}}
+        <x-signature-pad 
+            name="cliente" 
+            label="Cliente" 
+            :nombre="old('cliente_nombre', $tarea->cliente_nombre)"
+            :path="old('cliente_firma_path', $tarea->cliente_firma_path)"
+        />
         {{-- CAMPO: Evidencia Fotográfica --}}
         <div class="pt-4 border-t border-gray-700">
             <label for="fotos" class="block text-sm font-semibold mb-2">Evidencia Fotográfica (puedes seleccionar varias):</label>

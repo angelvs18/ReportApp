@@ -22,6 +22,12 @@ Route::middleware('auth')->group(function () {
 Route::patch('/tareas/{tarea}/status', [TareaController::class, 'updateStatus'])
     ->middleware(['auth'])
     ->name('tareas.updateStatus');
+    Route::get('/tareas/{tarea}/pdf', [TareaController::class, 'downloadPDF'])
+    ->middleware(['auth'])
+    ->name('tareas.pdf');
+
+    Route::patch('/tareas/{tarea}/status', /* ... */)->name('tareas.updateStatus'); // Tu ruta de status
+    Route::resource('tareas', TareaController::class)->middleware(['auth']); // Tu ruta resource
 
 Route::resource('tareas', TareaController::class)->middleware(['auth', 'verified']);
 require __DIR__.'/auth.php';

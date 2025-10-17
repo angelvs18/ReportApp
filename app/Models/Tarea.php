@@ -21,7 +21,11 @@ class Tarea extends Model
         'observaciones',
         'tipo',
         'estado',
-        'user_id', // <-- ¡AÑADE ESTA LÍNEA!
+        'user_id', 
+        'instalador_nombre',
+        'instalador_firma_path',
+        'cliente_nombre',
+        'cliente_firma_path',
     ];
 
     public function user()

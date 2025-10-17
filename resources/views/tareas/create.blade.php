@@ -41,6 +41,7 @@
             <label for="observaciones" class="block text-sm font-semibold mb-2">Observaciones (Opcional):</label>
             <textarea id="observaciones" name="observaciones" rows="3" class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg">{{ old('observaciones') }}</textarea>
         </div>
+        
 
         {{-- CAMPOS ESPECÍFICOS PARA GENERADORES --}}
         <div x-show="tipoReporte === 'generadores'" x-transition class="bg-gray-900/50 p-4 rounded-lg border border-yellow-500 space-y-4">
@@ -105,6 +106,13 @@
                 </div>
             </div>
         </div>
+
+        {{-- CAMPO: Firma Instalador --}}
+        <x-signature-pad name="instalador" label="Instalador" />
+
+        {{-- CAMPO: Firma Cliente --}}
+        <x-signature-pad name="cliente" label="Cliente" />
+
         {{-- CAMPO: Evidencia Fotográfica --}}
         <div class="pt-4 border-t border-gray-700">
             <label for="fotos" class="block text-sm font-semibold mb-2">Evidencia Fotográfica (puedes seleccionar varias):</label>

@@ -107,12 +107,57 @@
                 <p>{{ $tarea->created_at->format('d/m/Y H:i') }}</p>
             </div>
         </div>
+        {{-- =================== SECCIÓN DE FIRMAS =================== --}}
+        <div class="pt-4 border-t border-gray-700">
+            <h3 class="font-semibold text-lg text-gray-300 mb-4">Firmas</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {{-- Firma Instalador --}}
+                <div class="text-center">
+                    @if($tarea->instalador_firma_path)
+                        <img src="{{ Storage::url($tarea->instalador_firma_path) }}" alt="Firma Instalador" class="h-32 w-full object-contain border border-gray-700 rounded-md bg-white p-2">
+                    @else
+                        <div class="h-32 w-full flex items-center justify-center border border-dashed border-gray-700 rounded-md">
+                            <span class="text-gray-500">Sin Firma de Instalador</span>
+                        </div>
+                    @endif
+                    <p class="mt-2 text-gray-300 font-semibold border-t border-gray-600 pt-2">{{ $tarea->instalador_nombre ?? 'N/A' }}</p>
+                    <p class="text-sm text-gray-400">Instalador</p>
+                </div>
+
+                {{-- Firma Cliente --}}
+                <div class="text-center">
+                    @if($tarea->cliente_firma_path)
+                        <img src="{{ Storage::url($tarea->cliente_firma_path) }}" alt="Firma Cliente" class="h-32 w-full object-contain border border-gray-700 rounded-md bg-white p-2">
+                    @else
+                        <div class="h-32 w-full flex items-center justify-center border border-dashed border-gray-700 rounded-md">
+                            <span class="text-gray-500">Sin Firma de Cliente</span>
+                        </div>
+                    @endif
+                    <p class="mt-2 text-gray-300 font-semibold border-t border-gray-600 pt-2">{{ $tarea->cliente_nombre ?? 'N/A' }}</p>
+                    <p class="text-sm text-gray-400">Cliente</p>
+                </div>
+
+            </div>
+        </div>
 
         {{-- BOTONES --}}
         <div class="flex justify-end space-x-4 pt-6">
             <a href="{{ route('tareas.index') }}" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                 ⬅️ Volver
             </a>
+            <a href="{{ route('tareas.edit', $tarea) }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">
+                ✏️ Editar
+            </a>
+        </div>
+        {{-- NUEVO BOTÓN PDF --}}
+            <a href="{{ route('tareas.pdf', $tarea) }}" 
+               class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition"
+               target="_blank"> {{-- target="_blank" abre el PDF en una nueva pestaña --}}
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                Descargar PDF
+            </a>
+            
             <a href="{{ route('tareas.edit', $tarea) }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">
                 ✏️ Editar
             </a>
