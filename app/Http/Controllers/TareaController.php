@@ -50,6 +50,8 @@ public function store(Request $request)
         'actividades' => 'required|string',
         'observaciones' => 'nullable|string',
         'tipo' => 'required|in:vehiculos,generadores,instalaciones_red',
+        'fotos' => 'nullable|array', 
+        'fotos.*' => 'image|mimes:jpeg,png,jpg|max:2048'
     ]);
 
     // 2. Creamos la tarea principal
@@ -79,6 +81,19 @@ public function store(Request $request)
         $tarea->vehiculoDetalle()->create($vehiculoData);
     }
 
+    if ($request->hasFile('fotos')) {
+        foreach ($request->file('fotos') as $foto) {
+            // Guarda la imagen en 'storage/app/public/evidencias' y obtiene la ruta
+            $path = $foto->store('evidencias', 'public');
+
+            // Crea el registro en la tabla 'fotos'
+            $tarea->fotos()->create([
+                'path' => $path,
+                'etapa_subida' => 'pendiente' // Guarda la etapa actual
+            ]);
+        }
+    }
+
     // 5. Redirigimos
     return redirect()->route('tareas.index')->with('success', '¡Reporte creado exitosamente!');
 }
@@ -88,6 +103,7 @@ public function store(Request $request)
      */
     public function show(Tarea $tarea)
 {
+    $tarea->load('generadorDetalle', 'vehiculoDetalle', 'fotos');
     return view('tareas.show', compact('tarea'));
 }
 
@@ -103,42 +119,45 @@ public function store(Request $request)
      * Update the specified resource in storage.
      */
     public function update(Request $request, Tarea $tarea)
-{
-    // 1. Validación de los campos generales
-    $validatedData = $request->validate([
-        'folio' => 'required|string|max:255',
-        'descripcion' => 'required|string',
-        'actividades' => 'required|string',
-        'observaciones' => 'nullable|string',
-        'tipo' => 'required|in:vehiculos,generadores,instalaciones_red',
-    ]);
-
-    // 2. Actualizamos la tarea principal
-    $tarea->update($validatedData);
-
-    // 3. Si el reporte es de tipo "generadores", actualizamos o creamos los detalles
-    if ($tarea->tipo === 'generadores') {
-        // Validamos los campos de generadores
-        $generadorData = $request->validate([
-            'cantidad_equipos' => 'required|integer|min:1|max:20',
-            'numeros_economicos' => 'required|array|min:1',
-            'numeros_economicos.*' => 'required|string|max:255',
+    {
+        // 1. Validación de los campos generales + FOTOS
+        $validatedData = $request->validate([
+            'folio' => 'required|string|max:255',
+            'descripcion' => 'required|string',
+            'actividades' => 'required|string',
+            'observaciones' => 'nullable|string',
+            'tipo' => 'required|in:vehiculos,generadores,instalaciones_red',
+            'fotos' => 'nullable|array', // Valida que 'fotos' sea un array (o nulo)
+            'fotos.*' => 'image|mimes:jpeg,png,jpg|max:2048' // Cada foto debe ser imagen de max 2MB
         ]);
 
-        // Usamos updateOrCreate para actualizar el detalle si existe, o crearlo si no.
-        $tarea->generadorDetalle()->updateOrCreate(
-            ['tarea_id' => $tarea->id], // Condición de búsqueda
-            ['numeros_economicos' => $generadorData['numeros_economicos']] // Datos a actualizar o crear
-        );
-    } 
-    // 4. Si el reporte YA NO es de generadores, pero tenía detalles, los borramos para limpiar la base de datos.
-    elseif ($tarea->generadorDetalle) {
-        $tarea->generadorDetalle->delete();
-    }
+        // 2. Actualizamos la tarea principal
+        $tarea->update($validatedData);
 
-    // 5. Redirigimos al usuario
-    return redirect()->route('tareas.index')->with('success', '¡Reporte actualizado exitosamente!');
-}
+        // 3. Lógica para detalles de generadores/vehículos
+        if ($tarea->tipo === 'generadores') {
+            // ... (tu lógica de updateOrCreate para generadores) ...
+        } elseif ($tarea->tipo === 'vehiculos') {
+            // ... (tu lógica de updateOrCreate para vehiculos) ...
+        }
+
+        // 4. (NUEVO) Guardar las fotos si se subieron al editar
+        if ($request->hasFile('fotos')) {
+            foreach ($request->file('fotos') as $foto) {
+                $path = $foto->store('evidencias', 'public');
+                
+                // Aquí SÍ usamos $tarea->estado, porque la tarea ya existe
+                // y conocemos su estado actual.
+                $tarea->fotos()->create([
+                    'path' => $path,
+                    'etapa_subida' => $tarea->estado 
+                ]);
+            }
+        }
+
+        // 5. Redirigimos
+        return redirect()->route('tareas.index')->with('success', '¡Reporte actualizado exitosamente!');
+    }
     /**
      * Remove the specified resource from storage.
      */

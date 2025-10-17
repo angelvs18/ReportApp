@@ -4,7 +4,7 @@
 <div class="max-w-3xl mx-auto py-10 px-6 text-gray-100" x-data="{ tipoReporte: '{{ old('tipo', '') }}', cantidadEquipos: {{ old('cantidad_equipos', 0) }} }">
     <h1 class="text-3xl font-bold mb-6 text-white">➕ Crear Nuevo Reporte</h1>
     
-    <form method="POST" action="{{ route('tareas.store') }}" class="bg-gray-800 rounded-2xl p-6 shadow-xl space-y-6">
+    <form method="POST" action="{{ route('tareas.store') }}" class="bg-gray-800 rounded-2xl p-6 shadow-xl space-y-6" enctype="multipart/form-data">
         @csrf
 
         {{-- Folio --}}
@@ -104,6 +104,17 @@
                     </div>
                 </div>
             </div>
+        </div>
+        {{-- CAMPO: Evidencia Fotográfica --}}
+        <div class="pt-4 border-t border-gray-700">
+            <label for="fotos" class="block text-sm font-semibold mb-2">Evidencia Fotográfica (puedes seleccionar varias):</label>
+            <input 
+                type="file" 
+                id="fotos" 
+                name="fotos[]"
+                class="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                multiple
+            >
         </div>
 
         {{-- Botones de Acción --}}

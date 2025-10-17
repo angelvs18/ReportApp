@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\VehiculoDetalle;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tarea extends Model
 {
@@ -35,5 +36,9 @@ class Tarea extends Model
     public function vehiculoDetalle(): HasOne
 {
     return $this->hasOne(VehiculoDetalle::class);
+}
+public function fotos(): HasMany
+{
+    return $this->hasMany(Foto::class);
 }
 }
