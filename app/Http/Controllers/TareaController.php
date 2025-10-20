@@ -12,6 +12,7 @@ use App\Models\Tarea;
 use App\Models\GeneradorDetalle;
 use App\Models\VehiculoDetalle;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class TareaController extends Controller
 {
@@ -319,45 +320,87 @@ class TareaController extends Controller
         // OJO: Esta lógica está en el método 'update', aquí solo devolvemos la NUEVA ruta o null.
         return $newPath;
     }
-    public function downloadPDF(Tarea $tarea)
-    {
-        // Carga todas las relaciones necesarias para el PDF
-        $tarea->load('user', 'generadorDetalle', 'vehiculoDetalle', 'fotos');
-
-        // Preparamos los datos para la vista, incluyendo el logo codificado
-        $data = [
-            'tarea' => $tarea,
-            'logoPath' => public_path('images/kuantiva_logo.png'), // Ruta absoluta al logo
-            // Codificamos las imágenes a Base64 para incrustarlas directamente en el PDF
-            'instaladorFirmaBase64' => $this->getImageBase64($tarea->instalador_firma_path),
-            'clienteFirmaBase64' => $this->getImageBase64($tarea->cliente_firma_path),
-            'fotosBase64' => $tarea->fotos->map(function ($foto) {
-                return $this->getImageBase64($foto->path);
-            })->filter() // Quitamos posibles nulos si alguna foto no se encuentra
-        ];
-
-        // Carga la vista 'pdf_template' con los datos y genera el PDF
-        $pdf = Pdf::loadView('tareas.pdf_template', $data);
-
-        // Descarga el PDF con un nombre de archivo descriptivo
-        return $pdf->download('reporte-' . $tarea->folio . '.pdf');
-    }
-
+    
     /**
      * Función auxiliar para obtener la imagen como Base64.
      */
-    private function getImageBase64(?string $path): ?string
-    {
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            return null;
-        }
-        $fullPath = Storage::disk('public')->path($path);
-        $type = pathinfo($fullPath, PATHINFO_EXTENSION);
-        try {
-            $data = file_get_contents($fullPath);
-            return 'data:image/' . $type . ';base64,' . base64_encode($data);
-        } catch (\Exception $e) {
-            return null; // Devuelve null si hay error al leer el archivo
-        }
+    private function processImageForPdf(?string $path, int $maxWidth, string $format = 'jpg', int $quality = 75): ?string
+{
+    if (!$path || !Storage::disk('public')->exists($path)) {
+        return null;
     }
+
+    try {
+        // Carga la imagen desde el storage
+        $img = Image::make(Storage::disk('public')->path($path));
+
+        // Redimensiona la imagen si supera el ancho máximo
+        if ($img->width() > $maxWidth) {
+            $img->resize($maxWidth, null, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize(false); // No agranda la imagen si es más pequeña
+            });
+        }
+
+        // Codifica la imagen al formato y calidad deseados
+        $data = (string) $img->encode($format, $quality);
+
+        // Devuelve la cadena Base64
+        $mime = ($format === 'jpg' ? 'jpeg' : $format);
+        return 'data:image/' . $mime . ';base64,' . base64_encode($data);
+
+    } catch (\Exception $e) {
+        // En caso de error (ej. archivo corrupto), registra el error y devuelve null
+        \Log::error("Error processing image for PDF: " . $e->getMessage());
+        return null;
+    }
+}
+    
+    public function downloadPDF(Tarea $tarea)
+{
+    // Cargar relaciones (corregido a singular)
+    $tarea->load('user', 'generadorDetalle', 'vehiculoDetalle', 'fotos');
+
+    // --- Procesamiento de Imágenes ---
+
+    // 1. Procesar Logo (lo mantenemos como PNG, 150px de ancho)
+    // Usamos public_path() porque el logo está en la carpeta /public
+    $logoBase64 = null;
+    try {
+        $logoPath = public_path('images/kuantiva_logo.png'); //
+        if (file_exists($logoPath)) {
+            $img = Image::make($logoPath)->resize(150, null, fn($c) => $c->aspectRatio());
+            $logoBase64 = 'data:image/png;base64,' . base64_encode((string) $img->encode('png'));
+        }
+    } catch (\Exception $e) {
+         \Log::error("Error processing logo for PDF: " . $e->getMessage());
+    }
+
+    // 2. Procesar Firmas (como PNG, 300px de ancho)
+    // Usamos 'png' porque las firmas suelen tener fondo transparente
+    $instaladorFirmaBase64 = $this->processImageForPdf($tarea->instalador_firma_path, 300, 'png');
+    $clienteFirmaBase64 = $this->processImageForPdf($tarea->cliente_firma_path, 300, 'png');
+
+    // 3. Procesar Fotos (como JPG, 600px de ancho, calidad 75)
+    // Usamos 'jpg' y calidad 75 para máxima compresión
+    $fotosBase64 = $tarea->fotos->map(function ($foto) { 
+        return $this->processImageForPdf($foto->path, 600, 'jpg', 75);
+    })->filter(); // .filter() elimina los 'null' si alguna foto falló
+
+    // --- Fin Procesamiento ---
+
+    $data = [
+        'tarea' => $tarea,
+        'logoBase64' => $logoBase64, // Variable nueva
+        'instaladorFirmaBase64' => $instaladorFirmaBase64, // Variable optimizada
+        'clienteFirmaBase64' => $clienteFirmaBase64, // Variable optimizada
+        'fotosBase64' => $fotosBase64, // Colección optimizada
+    ];
+
+    // Carga la vista de plantilla
+    $pdf = Pdf::loadView('tareas.pdf_template', $data);
+
+    // Descarga el archivo
+    return $pdf->download('reporte_tarea_' . $tarea->id . '.pdf');
+}
 }

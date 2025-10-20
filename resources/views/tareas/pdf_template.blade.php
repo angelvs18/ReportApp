@@ -33,8 +33,8 @@
 <body>
     <div class="container">
         <div class="header">
-            @if(isset($logoPath) && file_exists($logoPath))
-                <img src="data:image/png;base64,{{ base64_encode(file_get_contents($logoPath)) }}" alt="Logo Kuantiva">
+            @if(isset($logoBase64))
+                <img src="{{ $logoBase64 }}" alt="Logo Kuantiva" style="max-width: 150px; height: auto;">
             @else
                 <h2>Kuantiva</h2>
             @endif
