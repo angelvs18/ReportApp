@@ -4,25 +4,22 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TareaController;
 
-// Ruta de Bienvenida
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Rutas que requieren autenticación
-Route::middleware(['auth', 'verified'])->group(function () {
-    
-    // Ruta del Dashboard
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-    // Rutas del Perfil de Usuario
+// --- Grupo de rutas que requieren autenticación ---
+Route::middleware('auth')->group(function () {
+    // Rutas del perfil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Rutas para los Reportes (Tareas)
+    // --- Rutas de Tareas ---
 
     // Ruta específica para actualizar el estado (DEBE IR ANTES del resource)
     Route::patch('/tareas/{tarea}/status', [TareaController::class, 'updateStatus'])
@@ -32,11 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tareas/{tarea}/pdf', [TareaController::class, 'downloadPDF'])
         ->name('tareas.pdf');
 
-    // Rutas CRUD estándar para tareas (index, create, store, show, edit, update, destroy)
-    // Solo necesitamos definirla UNA VEZ y dentro del middleware auth.
-    Route::resource('tareas', TareaController::class); 
+    // Rutas CRUD estándar (index, create, store, show, edit, update, destroy)
+    Route::resource('tareas', TareaController::class);
 
-}); // Fin del grupo de middleware 'auth', 'verified'
+}); // --- Fin del grupo auth ---
 
-// Archivo de rutas de autenticación (login, register, etc.)
 require __DIR__.'/auth.php';
