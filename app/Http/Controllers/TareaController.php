@@ -12,7 +12,7 @@ use App\Models\Tarea;
 use App\Models\GeneradorDetalle;
 use App\Models\VehiculoDetalle;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Intervention\Image\ImageManagerStatic as Image;
+use Intervention\Image\Laravel\Facades\Image;
 
 class TareaController extends Controller
 {
@@ -400,7 +400,7 @@ class TareaController extends Controller
     // Carga la vista de plantilla
     $pdf = Pdf::loadView('tareas.pdf_template', $data);
 
-    // Descarga el archivo
+    // Descarga el archivos
     return $pdf->download('reporte_tarea_' . $tarea->id . '.pdf');
 }
 }
