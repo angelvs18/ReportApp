@@ -326,36 +326,54 @@ class TareaController extends Controller
     /**
      * Función auxiliar para obtener la imagen como Base64.
      */
-     private function processImageForPdf(?string $path, int $maxWidth, string $format = 'jpg', int $quality = 75): ?string
-    {
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            return null;
-        }
-
-        try {
-            $manager = new ImageManager(new Driver());
-            $img = $manager->read(Storage::disk('public')->path($path));
-
-            // Redimensionar proporcionalmente si es necesario
-            if ($img->width() > $maxWidth) {
-                $img = $img->scaleDown(width: $maxWidth);
-            }
-
-            // Convertir a formato solicitado
-            $encoded = match ($format) {
-                'png' => $img->toPng(),
-                'jpg', 'jpeg' => $img->toJpeg($quality),
-                default => $img->toWebp($quality),
-            };
-
-            // Devolver Base64
-            $mime = ($format === 'jpg' ? 'jpeg' : $format);
-            return 'data:image/' . $mime . ';base64,' . base64_encode((string) $encoded);
-        } catch (\Exception $e) {
-            \Log::error("Error processing image for PDF: " . $e->getMessage());
-            return null;
-        }
+     /**
+ * Procesa una imagen para PDF optimizándola según su tipo.
+ */
+private function processImageForPdf(?string $path, int $maxWidth = 600, string $format = 'webp', int $quality = 70): ?string
+{
+    if (!$path || !Storage::disk('public')->exists($path)) {
+        return null;
     }
+
+    try {
+        // 🔍 Determinar tipo según el nombre de la ruta
+        if (Str::contains($path, 'fotos')) {
+            $maxWidth = 500;
+            $quality = 65;
+        } elseif (Str::contains($path, 'firma')) {
+            $maxWidth = 300;
+            $quality = 80;
+        } elseif (Str::contains($path, 'logo')) {
+            $maxWidth = 150;
+            $quality = 90;
+        }
+
+        // Crear instancia del manejador
+        $manager = new ImageManager(new Driver());
+        $img = $manager->read(Storage::disk('public')->path($path));
+
+        // 🖼️ Redimensionar proporcionalmente si excede el ancho máximo
+        if ($img->width() > $maxWidth) {
+            $img = $img->scaleDown(width: $maxWidth);
+        }
+
+        // 🎨 Convertir al formato más eficiente
+        $encoded = match ($format) {
+            'png' => $img->toPng(),
+            'jpg', 'jpeg' => $img->toJpeg($quality),
+            'webp' => $img->toWebp($quality),
+            default => $img->toWebp($quality),
+        };
+
+        // 📦 Devolver como Base64
+        $mime = $format === 'jpg' ? 'jpeg' : $format;
+        return 'data:image/' . $mime . ';base64,' . base64_encode((string) $encoded);
+    } catch (\Exception $e) {
+        \Log::error("Error processing image for PDF: " . $e->getMessage());
+        return null;
+    }
+}
+
     
      /**
      * Genera y descarga el PDF de una tarea.
@@ -386,7 +404,7 @@ class TareaController extends Controller
 
         // 3. Fotos (como JPG, 600px de ancho, calidad 75)
         $fotosBase64 = $tarea->fotos->map(function ($foto) {
-            return $this->processImageForPdf($foto->path, 600, 'jpg', 75);
+            return $this->processImageForPdf($foto->path, 600, 'webp', 70);
         })->filter();
 
         // --- Fin Procesamiento ---
