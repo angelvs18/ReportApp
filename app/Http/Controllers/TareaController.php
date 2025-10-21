@@ -332,8 +332,7 @@ class TareaController extends Controller
 
     try {
         // Carga la imagen desde el storage
-        $img = Image::make(Storage::disk('public')->path($path));
-
+        $img = Image::driver()->make(Storage::disk('public')->path($path));
         // Redimensiona la imagen si supera el ancho máximo
         if ($img->width() > $maxWidth) {
             $img->resize($maxWidth, null, function ($constraint) {
@@ -354,6 +353,11 @@ class TareaController extends Controller
         \Log::error("Error processing image for PDF: " . $e->getMessage());
         return null;
     }
+
+    if (!$path || !Storage::disk('public')->exists($path)) {
+    // Placeholder: Una imagen gris simple en Base64 (puedes generar una estática)
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6ZwAAAABJRU5ErkJggg=='; // Gris 1x1px
+}
 }
     
     public function downloadPDF(Tarea $tarea)
@@ -369,7 +373,7 @@ class TareaController extends Controller
     try {
         $logoPath = public_path('images/kuantiva_logo.png'); //
         if (file_exists($logoPath)) {
-            $img = Image::make($logoPath)->resize(150, null, fn($c) => $c->aspectRatio());
+            $img = Image::driver()->make($logoPath)->resize(150, null, fn($c) => $c->aspectRatio());
             $logoBase64 = 'data:image/png;base64,' . base64_encode((string) $img->encode('png'));
         }
     } catch (\Exception $e) {
