@@ -7,7 +7,8 @@
     <style>
         body { font-family: 'Helvetica', sans-serif; font-size: 11px; line-height: 1.4; color: #333; }
         .container { width: 100%; margin: 0 auto; padding: 20px; }
-        .header, .footer { text-align: center; margin-bottom: 20px; }
+        .header { text-align: center; margin-bottom: 20px; } 
+        .footer { text-align: center; margin-bottom: 20px; }
         .header img { max-width: 150px; height: auto; }
         .report-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; }
         .section { margin-bottom: 25px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
@@ -28,6 +29,7 @@
         .footer { font-size: 9px; color: #777; margin-top: 30px; }
         .capitalize { text-transform: capitalize; }
         .page-break { page-break-after: always; } /* Para saltos de página si es necesario */
+        .page-break-before { page-break-before: always; }
     </style>
 </head>
 <body>
@@ -65,7 +67,7 @@
             <div class="section-title">Detalles del Reporte</div>
             <div class="details-grid">
                 <div><span class="label">Descripción:</span> {{ $tarea->descripcion }}</div>
-                <div><span class="label">Actividades Realizadas:</span> {{ $tarea->actividades }}</div>
+                <div><span class="label">Actividades Realizadas:</span> {!! nl2br(e($tarea->actividades)) !!}</div>
                 @if($tarea->observaciones)
                 <div><span class="label">Observaciones:</span> {{ $tarea->observaciones }}</div>
                 @endif
@@ -100,9 +102,9 @@
         
         {{-- Sección Evidencia Fotográfica --}}
         @if ($fotosBase64 && !$fotosBase64->isEmpty())
-            <div class="section">
+            <div class="section page-break-before">
                 <div class="section-title">Evidencia Fotográfica</div>
-                <div class="photos-grid">
+                <div class="photos-grid0" style="margin-top: 35px;">
                      @foreach ($fotosBase64 as $fotoBase64)
                         <div class="photo-item">
                             <img src="{{ $fotoBase64 }}" alt="Evidencia">

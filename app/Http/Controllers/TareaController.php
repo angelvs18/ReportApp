@@ -348,16 +348,27 @@ private function processImageForPdf(?string $path, int $maxWidth = 600, string $
             $quality = 90;
         }
 
-        // Crear instancia del manejador
+        // 📂 Configurar ruta de caché (en storage/app/public/pdf_cache)
+        $cacheDir = 'pdf_cache';
+        $cacheFile = $cacheDir . '/' . md5($path . $maxWidth . $quality . $format) . '.' . $format;
+
+        // Si ya existe una versión comprimida, la usamos directamente
+        if (Storage::disk('public')->exists($cacheFile)) {
+            $cachedImage = Storage::disk('public')->get($cacheFile);
+            $mime = $format === 'jpg' ? 'jpeg' : $format;
+            return 'data:image/' . $mime . ';base64,' . base64_encode($cachedImage);
+        }
+
+        // Crear manejador de imágenes
         $manager = new ImageManager(new Driver());
         $img = $manager->read(Storage::disk('public')->path($path));
 
-        // 🖼️ Redimensionar proporcionalmente si excede el ancho máximo
+        // 🖼️ Redimensionar proporcionalmente
         if ($img->width() > $maxWidth) {
             $img = $img->scaleDown(width: $maxWidth);
         }
 
-        // 🎨 Convertir al formato más eficiente
+        // 🎨 Convertir y comprimir según formato
         $encoded = match ($format) {
             'png' => $img->toPng(),
             'jpg', 'jpeg' => $img->toJpeg($quality),
@@ -365,9 +376,16 @@ private function processImageForPdf(?string $path, int $maxWidth = 600, string $
             default => $img->toWebp($quality),
         };
 
-        // 📦 Devolver como Base64
+        // 💾 Guardar copia comprimida en caché
+        if (!Storage::disk('public')->exists($cacheDir)) {
+            Storage::disk('public')->makeDirectory($cacheDir);
+        }
+        Storage::disk('public')->put($cacheFile, (string) $encoded);
+
+        // 📦 Devolver base64 para Dompdf
         $mime = $format === 'jpg' ? 'jpeg' : $format;
         return 'data:image/' . $mime . ';base64,' . base64_encode((string) $encoded);
+
     } catch (\Exception $e) {
         \Log::error("Error processing image for PDF: " . $e->getMessage());
         return null;
